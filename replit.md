@@ -82,17 +82,19 @@ Preferred communication style: Simple, everyday language.
 
 ## Deployment Strategy
 
-### Database-Free Architecture
-- **No External Database**: All data loaded from CSV/TXT files into memory
-- **Fast Lookups**: Pandas DataFrame with indexed RNC column
-- **Memory Efficient**: Optimized data loading with proper encoding detection
-- **Production Ready**: No database maintenance or connection issues
+### PostgreSQL Database Architecture
+- **Database**: PostgreSQL for scalable data storage and fast queries
+- **ORM**: SQLAlchemy for database operations and model management
+- **Data Import**: Automated import from DGII CSV/TXT files on startup
+- **Performance**: Indexed RNC column for millisecond lookup times
+- **Production Ready**: Reliable database with connection pooling and error handling
 
 ### Render.com Deployment Configuration
 - **Platform**: Render.com cloud platform
 - **Plan**: Free tier compatible
-- **Build Command**: `pip install flask pandas gunicorn werkzeug`
-- **Start Command**: `gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 60 main:app`
+- **Build Command**: `pip install flask pandas gunicorn werkzeug flask-sqlalchemy psycopg2-binary`
+- **Start Command**: `gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 300 main:app`
+- **Database**: PostgreSQL database automatically provisioned
 - **Auto-Deploy**: Git push triggers automatic redeployment
 
 ### Environment Configuration
@@ -104,9 +106,10 @@ Preferred communication style: Simple, everyday language.
 
 ### Performance Optimizations
 - **Worker Configuration**: Single worker to conserve memory on free tier
-- **Extended Timeout**: 60 seconds for initial data loading
-- **Memory Usage**: ~200MB for 700k+ RNC records
-- **Cold Start**: 30-60 seconds first load, instant subsequent requests
+- **Extended Timeout**: 300 seconds for initial database setup and data import
+- **Database Indexing**: Optimized RNC column indexing for fast lookups
+- **Connection Pooling**: SQLAlchemy connection pooling for efficient database access
+- **Cold Start**: 2-5 minutes first deployment (data import), instant subsequent requests
 
 ### Deployment Files
 - **render.yaml**: Automatic Render deployment configuration
@@ -117,20 +120,22 @@ Preferred communication style: Simple, everyday language.
 
 ### Environment Variables
 - **PORT**: Server port (auto-configured by Render)
+- **DATABASE_URL**: PostgreSQL connection string (auto-configured by Render)
 - **SESSION_SECRET**: Flask session encryption key (auto-generated)
 - **FLASK_ENV**: Environment mode (production/development)
 - **PYTHON_VERSION**: Python runtime version (3.11.0)
 
 ## Recent Changes (January 2025)
 
-### Database Removal and Render Preparation
-- ✓ Removed all database dependencies (SQLAlchemy, PostgreSQL)
-- ✓ Configured dynamic port binding for cloud deployment
-- ✓ Added production-ready logging configuration
-- ✓ Created Render deployment files (render.yaml, Procfile)
-- ✓ Optimized data loading performance for production
-- ✓ Fixed type safety issues in API routes
-- ✓ Added comprehensive deployment documentation
-- ✓ Configured gunicorn with production settings
+### PostgreSQL Integration and Render Optimization
+- ✓ Implemented PostgreSQL database with SQLAlchemy ORM
+- ✓ Created RNCRecord model with optimized schema
+- ✓ Built automated data importer for DGII files
+- ✓ Configured database connection pooling and indexing
+- ✓ Updated API service to use database queries instead of in-memory data
+- ✓ Extended timeout to 300 seconds for data import process
+- ✓ Added database configuration to Render deployment files
+- ✓ Fixed type safety issues in API routes and data importer
+- ✓ Optimized for scalable cloud hosting with persistent data storage
 
-The application is now fully prepared for deployment on Render.com with zero database dependencies and optimized for cloud hosting performance.
+The application is now fully prepared for deployment on Render.com with PostgreSQL database backend, providing better scalability, persistence, and performance for handling 700k+ RNC records.

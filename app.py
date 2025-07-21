@@ -11,6 +11,27 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "fallback_secret_key_for_development")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
+# Configure database
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_recycle": 300,
+    "pool_pre_ping": True,
+}
+
+# Initialize database
+from models import db
+db.init_app(app)
+
+# Create tables and import data
+with app.app_context():
+    db.create_all()
+    
+    # Import RNC data if tables are empty
+    from models import RNCRecord
+    if RNCRecord.query.count() == 0:
+        from data_importer import import_rnc_data
+        import_rnc_data()
+
 # Import and register routes
 from api_routes import api_bp
 app.register_blueprint(api_bp)

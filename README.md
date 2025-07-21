@@ -10,13 +10,14 @@ API de verificación de RNCs dominicanos con documentación interactiva, branded
 - ✅ Rate limiting integrado (60 req/min)
 - ✅ Búsqueda individual y por lotes
 - ✅ Documentación interactiva completa
-- ✅ Sin dependencias de base de datos externa
+- ✅ Base de datos PostgreSQL para rendimiento óptimo
 
 ## Tecnologías
 
-- **Backend**: Flask (Python)
+- **Backend**: Flask (Python) + SQLAlchemy ORM
+- **Database**: PostgreSQL
 - **Frontend**: Bootstrap 5, Vanilla JavaScript
-- **Data**: Pandas para procesamiento de archivos CSV/TXT
+- **Data Processing**: Pandas para importación inicial de archivos DGII
 - **Deployment**: Gunicorn WSGI server
 
 ## Instalación Local
@@ -24,7 +25,12 @@ API de verificación de RNCs dominicanos con documentación interactiva, branded
 1. Clona el repositorio
 2. Instala las dependencias:
    ```bash
-   pip install flask pandas gunicorn werkzeug
+   pip install flask pandas gunicorn werkzeug flask-sqlalchemy psycopg2-binary
+   ```
+3. Configura PostgreSQL y las variables de entorno:
+   ```bash
+   export DATABASE_URL="postgresql://user:password@localhost/rnc_validator"
+   export SESSION_SECRET="your-secret-key"
    ```
 3. Ejecuta la aplicación:
    ```bash

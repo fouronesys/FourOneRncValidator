@@ -23,18 +23,27 @@ Asegúrate de que tu repositorio contenga estos archivos:
 2. Ve a [render.com](https://render.com) y regístrate/inicia sesión
 3. Haz clic en "New +" → "Blueprint"
 4. Conecta tu repositorio GitHub
-5. Render detectará automáticamente el `render.yaml` y creará el servicio
+5. Render detectará automáticamente el `render.yaml` y creará:
+   - Web Service (aplicación Flask)
+   - PostgreSQL Database (base de datos)
 
 #### Opción B: Configuración Manual
 
 1. Ve a [render.com](https://render.com)
-2. Haz clic en "New +" → "Web Service"
-3. Conecta tu repositorio GitHub
-4. Configuración:
-   - **Name**: `four-one-rnc-validator`
-   - **Environment**: `Python 3`
-   - **Build Command**: `pip install flask pandas gunicorn werkzeug`
-   - **Start Command**: `gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 60 main:app`
+2. Crear la base de datos primero:
+   - Haz clic en "New +" → "PostgreSQL"
+   - Name: `four-one-rnc-db`
+   - Database: `rnc_validator`
+   - User: `rnc_user`
+3. Crear el Web Service:
+   - Haz clic en "New +" → "Web Service"
+   - Conecta tu repositorio GitHub
+   - Configuración:
+     - **Name**: `four-one-rnc-validator`
+     - **Environment**: `Python 3`
+     - **Build Command**: `pip install flask pandas gunicorn werkzeug flask-sqlalchemy psycopg2-binary`
+     - **Start Command**: `gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 300 main:app`
+   - En Environment Variables, conecta la base de datos creada anteriormente
 
 ### 3. Variables de Entorno
 
