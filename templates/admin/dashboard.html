@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin - Four One RNC Validator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --four-one-blue: #405DE6;
+            --four-one-blue-dark: #3651DB;
+            --four-one-blue-light: #5B7BEA;
+            --four-one-white: #FFFFFF;
+            --four-one-light-gray: #F8F9FA;
+        }
+        
+        body {
+            background-color: var(--four-one-light-gray);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background: var(--four-one-blue) !important;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-3px);
+        }
+        
+        .stat-card .card-body {
+            padding: 2rem;
+        }
+        
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-four-one {
+            background: var(--four-one-blue);
+            border-color: var(--four-one-blue);
+            color: white;
+        }
+        
+        .btn-four-one:hover {
+            background: var(--four-one-blue-dark);
+            border-color: var(--four-one-blue-dark);
+            color: white;
+        }
+        
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .badge-success {
+            background-color: #28a745;
+        }
+        
+        .badge-danger {
+            background-color: #dc3545;
+        }
+        
+        .badge-warning {
+            background-color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('admin.dashboard') }}">
+                <i class="fas fa-shield-alt me-2"></i>
+                Four One Admin
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('admin.upload_data') }}">
+                    <i class="fas fa-upload me-1"></i>
+                    Subir Datos
+                </a>
+                <a class="nav-link" href="{{ url_for('admin.manage_tokens') }}">
+                    <i class="fas fa-key me-1"></i>
+                    Tokens
+                </a>
+                <a class="nav-link" href="{{ url_for('admin.view_logs') }}">
+                    <i class="fas fa-list me-1"></i>
+                    Logs
+                </a>
+                <a class="nav-link" href="{{ url_for('admin.logout') }}">
+                    <i class="fas fa-sign-out-alt me-1"></i>
+                    Salir
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="h3 mb-0">Dashboard de Administración</h1>
+                <p class="text-muted">Panel de control para gestión de datos RNC</p>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-5">
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <div class="stat-icon text-primary">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <div class="stat-number text-primary">{{ "{:,}".format(stats.total_records) }}</div>
+                        <div class="stat-label">Registros RNC</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <div class="stat-icon text-success">
+                            <i class="fas fa-key"></i>
+                        </div>
+                        <div class="stat-number text-success">{{ active_tokens }}</div>
+                        <div class="stat-label">Tokens Activos</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <div class="stat-icon text-warning">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-number text-warning">{{ recent_updates|length }}</div>
+                        <div class="stat-label">Actualizaciones Recientes</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <div class="stat-icon text-info">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-number text-info">{{ total_tokens }}</div>
+                        <div class="stat-label">Total Tokens</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Acciones Rápidas</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <a href="{{ url_for('admin.upload_data') }}" class="btn btn-four-one btn-lg w-100">
+                                    <i class="fas fa-upload me-2"></i>
+                                    Subir Nuevo Archivo DGII
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a href="{{ url_for('admin.manage_tokens') }}" class="btn btn-outline-primary btn-lg w-100">
+                                    <i class="fas fa-key me-2"></i>
+                                    Gestionar Tokens API
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a href="{{ url_for('api.documentation') }}" class="btn btn-outline-secondary btn-lg w-100" target="_blank">
+                                    <i class="fas fa-external-link-alt me-2"></i>
+                                    Ver API Pública
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Updates Log -->
+        {% if recent_updates %}
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Actualizaciones Recientes</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Archivo</th>
+                                        <th>Registros</th>
+                                        <th>Estado</th>
+                                        <th>Usuario</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for log in recent_updates[:5] %}
+                                    <tr>
+                                        <td>{{ log.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                        <td>{{ log.filename }}</td>
+                                        <td>{{ "{:,}".format(log.records_imported) if log.records_imported else '-' }}</td>
+                                        <td>
+                                            {% if log.status == 'success' %}
+                                                <span class="badge badge-success">Exitoso</span>
+                                            {% elif log.status == 'error' %}
+                                                <span class="badge badge-danger">Error</span>
+                                            {% else %}
+                                                <span class="badge badge-warning">Procesando</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ log.admin_user or '-' }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if recent_updates|length > 5 %}
+                        <div class="text-center mt-3">
+                            <a href="{{ url_for('admin.view_logs') }}" class="btn btn-outline-primary">
+                                Ver Todos los Logs
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center mt-5 py-4">
+        <div class="container">
+            <a href="https://instagram.com/fouronesolutionssrl" target="_blank" class="text-decoration-none">
+                <i class="fab fa-instagram me-2"></i>
+                @fouronesolutionssrl
+            </a>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

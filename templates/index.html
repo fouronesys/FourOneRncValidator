@@ -10,11 +10,13 @@
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #405DE6 0%, #3651DB 100%) !important;">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="/">
-                <i class="fas fa-shield-alt me-2"></i>
-                Four One RNC Validator
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="/">
+                <div class="logo-mini me-2">
+                    <img src="{{ url_for('static', filename='img/logo.webp') }}" alt="Four One Logo" style="width: 40px; height: 40px; border-radius: 8px;">
+                </div>
+                <span>Four One RNC Validator</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -30,26 +32,39 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/api/status">Estado API</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/login">
+                            <i class="fas fa-user-shield me-1"></i>
+                            Admin
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <section class="hero-section bg-gradient-primary text-white py-5">
+    <section class="hero-section text-white py-5" style="background: linear-gradient(135deg, #405DE6 0%, #3651DB 100%);">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-6">
-                    <h1 class="display-4 fw-bold mb-4">
-                        API de Verificación RNC
-                        <span class="text-warning">Dominicana</span>
-                    </h1>
+                    <div class="d-flex align-items-center mb-4">
+                        <img src="{{ url_for('static', filename='img/logo.webp') }}" alt="Four One Solutions" 
+                             style="width: 80px; height: 80px; border-radius: 16px; margin-right: 1rem;">
+                        <div>
+                            <h1 class="display-4 fw-bold mb-2">
+                                Four One
+                                <span style="color: #FFD700;">RNC Validator</span>
+                            </h1>
+                            <p class="mb-0" style="color: rgba(255,255,255,0.8);">by Four One Solutions SRL</p>
+                        </div>
+                    </div>
                     <p class="lead mb-4">
                         Valida y obtén información completa de RNCs dominicanos con nuestra API rápida y confiable. 
-                        Powered by Four One Technologies.
+                        Basado en datos oficiales de la DGII.
                     </p>
-                    <div class="d-flex gap-3">
-                        <a href="/docs" class="btn btn-warning btn-lg px-4">
+                    <div class="d-flex gap-3 flex-wrap">
+                        <a href="/docs" class="btn btn-lg px-4" style="background: #FFD700; color: #000; border: none; font-weight: 600;">
                             <i class="fas fa-book me-2"></i>
                             Ver Documentación
                         </a>
@@ -57,11 +72,22 @@
                             <i class="fas fa-play me-2"></i>
                             Probar API
                         </a>
+                        <a href="#tokens" class="btn btn-outline-light btn-lg px-4">
+                            <i class="fas fa-key me-2"></i>
+                            Obtener Token
+                        </a>
                     </div>
                 </div>
                 <div class="col-lg-6 text-center">
-                    <div class="api-illustration">
-                        <i class="fas fa-database fa-8x text-warning opacity-75"></i>
+                    <div class="api-illustration position-relative">
+                        <div class="d-flex justify-content-center align-items-center" style="height: 300px;">
+                            <div class="position-relative">
+                                <i class="fas fa-database fa-8x opacity-75" style="color: #FFD700;"></i>
+                                <div class="position-absolute top-0 start-100 translate-middle">
+                                    <i class="fas fa-shield-check fa-3x text-light bg-success rounded-circle p-2"></i>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -228,19 +254,208 @@
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="bg-dark text-white py-4">
+    <!-- Tokens Section -->
+    <section id="tokens" class="py-5" style="background: linear-gradient(135deg, #405DE6 0%, #3651DB 100%);">
+        <div class="container">
+            <div class="row text-center mb-5">
+                <div class="col-12">
+                    <h2 class="fw-bold mb-3 text-white">Sistema de Tokens API</h2>
+                    <p class="text-white-50">Obtén mayor límite de requests con tokens personalizados</p>
+                </div>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body text-center p-4">
+                            <div class="mb-3">
+                                <i class="fas fa-clock fa-3x text-warning"></i>
+                            </div>
+                            <h4 class="fw-bold">Sin Token</h4>
+                            <p class="text-muted">Límite básico para pruebas</p>
+                            <div class="display-6 fw-bold text-warning mb-2">10</div>
+                            <p class="text-muted small">requests por minuto</p>
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item d-flex justify-content-between">
+                                    <span>Rate Limiting</span>
+                                    <i class="fas fa-check text-success"></i>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between">
+                                    <span>Acceso a Endpoints</span>
+                                    <i class="fas fa-check text-success"></i>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between">
+                                    <span>Soporte</span>
+                                    <span class="text-muted">Básico</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card h-100 border-primary">
+                        <div class="card-header bg-primary text-white text-center">
+                            <i class="fas fa-crown me-2"></i>Recomendado
+                        </div>
+                        <div class="card-body text-center p-4">
+                            <div class="mb-3">
+                                <i class="fas fa-key fa-3x text-primary"></i>
+                            </div>
+                            <h4 class="fw-bold">Con Token</h4>
+                            <p class="text-muted">Límites personalizados</p>
+                            <div class="display-6 fw-bold text-primary mb-2">60+</div>
+                            <p class="text-muted small">requests por hora (configurable)</p>
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item d-flex justify-content-between">
+                                    <span>Rate Limiting Extendido</span>
+                                    <i class="fas fa-check text-success"></i>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between">
+                                    <span>Monitoreo de Uso</span>
+                                    <i class="fas fa-check text-success"></i>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between">
+                                    <span>Soporte Prioritario</span>
+                                    <i class="fas fa-check text-success"></i>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <a href="https://instagram.com/fouronesolutionssrl" target="_blank" class="btn btn-primary btn-lg">
+                                    <i class="fab fa-instagram me-2"></i>
+                                    Solicitar Token
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-5">
+                <div class="col-12 text-center">
+                    <div class="card bg-transparent border-light">
+                        <div class="card-body">
+                            <h5 class="text-white mb-3">¿Cómo usar los tokens?</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <h6 class="text-white">Header Authorization:</h6>
+                                        <code class="bg-dark text-white p-2 rounded d-block">
+                                            Authorization: Bearer tu-token-aqui
+                                        </code>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <h6 class="text-white">Query Parameter:</h6>
+                                        <code class="bg-dark text-white p-2 rounded d-block">
+                                            /api/validate/12345678901?token=tu-token-aqui
+                                        </code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Instagram Section -->
+    <section class="py-5 bg-light">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-md-6">
-                    <p class="mb-0">
-                        &copy; 2025 Four One RNC Validator. Todos los derechos reservados.
+                    <h2 class="fw-bold mb-3">Síguenos en Instagram</h2>
+                    <p class="lead text-muted mb-4">
+                        Mantente al día con las últimas actualizaciones de Four One Solutions. 
+                        Contáctanos para obtener tokens API personalizados y soporte técnico.
+                    </p>
+                    <a href="https://instagram.com/fouronesolutionssrl" target="_blank" 
+                       class="btn btn-lg px-4" style="background: linear-gradient(45deg, #405DE6, #C13584); color: white; border: none;">
+                        <i class="fab fa-instagram me-2"></i>
+                        @fouronesolutionssrl
+                    </a>
+                </div>
+                <div class="col-md-6 text-center">
+                    <div class="instagram-preview">
+                        <img src="{{ url_for('static', filename='img/logo.webp') }}" 
+                             alt="Four One Solutions" 
+                             class="img-fluid rounded-3 shadow" 
+                             style="max-width: 300px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer style="background: linear-gradient(135deg, #405DE6 0%, #3651DB 100%);" class="text-white py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="{{ url_for('static', filename='img/logo.webp') }}" 
+                             alt="Four One Solutions" 
+                             style="width: 50px; height: 50px; border-radius: 10px; margin-right: 1rem;">
+                        <div>
+                            <h5 class="fw-bold mb-0">Four One Solutions</h5>
+                            <small style="color: rgba(255,255,255,0.8);">RNC Validator API</small>
+                        </div>
+                    </div>
+                    <p style="color: rgba(255,255,255,0.8);">
+                        Soluciones tecnológicas para validación de RNCs dominicanos con datos oficiales de la DGII.
                     </p>
                 </div>
-                <div class="col-md-6 text-end">
-                    <p class="mb-0">
+                
+                <div class="col-md-4 mb-4">
+                    <h6 class="fw-bold mb-3">Enlaces Rápidos</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <a href="/docs" class="text-white-50 text-decoration-none">
+                                <i class="fas fa-book me-2"></i>Documentación
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="/api/status" class="text-white-50 text-decoration-none">
+                                <i class="fas fa-chart-line me-2"></i>Estado API
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="/admin/login" class="text-white-50 text-decoration-none">
+                                <i class="fas fa-user-shield me-2"></i>Admin Panel
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="col-md-4 mb-4">
+                    <h6 class="fw-bold mb-3">Contacto</h6>
+                    <div class="mb-3">
+                        <a href="https://instagram.com/fouronesolutionssrl" target="_blank" 
+                           class="btn btn-outline-light btn-sm">
+                            <i class="fab fa-instagram me-2"></i>
+                            @fouronesolutionssrl
+                        </a>
+                    </div>
+                    <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">
+                        Para solicitar tokens API personalizados o soporte técnico, contáctanos a través de Instagram.
+                    </p>
+                </div>
+            </div>
+            
+            <hr style="border-color: rgba(255,255,255,0.2);">
+            
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0" style="color: rgba(255,255,255,0.8);">
+                        &copy; 2025 Four One Solutions SRL. Todos los derechos reservados.
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0" style="color: rgba(255,255,255,0.8);">
                         <i class="fas fa-database me-1"></i>
-                        Powered by Four One Technologies
+                        Powered by PostgreSQL & Flask
                     </p>
                 </div>
             </div>

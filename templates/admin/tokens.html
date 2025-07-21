@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Tokens - Four One RNC Validator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --four-one-blue: #405DE6;
+            --four-one-blue-dark: #3651DB;
+            --four-one-blue-light: #5B7BEA;
+            --four-one-white: #FFFFFF;
+            --four-one-light-gray: #F8F9FA;
+        }
+        
+        body {
+            background-color: var(--four-one-light-gray);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background: var(--four-one-blue) !important;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .btn-four-one {
+            background: var(--four-one-blue);
+            border-color: var(--four-one-blue);
+            color: white;
+        }
+        
+        .btn-four-one:hover {
+            background: var(--four-one-blue-dark);
+            border-color: var(--four-one-blue-dark);
+            color: white;
+        }
+        
+        .token-card {
+            transition: transform 0.2s ease;
+        }
+        
+        .token-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .token-string {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            background: #f8f9fa;
+            padding: 0.5rem;
+            border-radius: 8px;
+            word-break: break-all;
+        }
+        
+        .usage-progress {
+            height: 8px;
+        }
+        
+        .copy-btn {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('admin.dashboard') }}">
+                <i class="fas fa-shield-alt me-2"></i>
+                Four One Admin
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('admin.dashboard') }}">
+                    <i class="fas fa-tachometer-alt me-1"></i>
+                    Dashboard
+                </a>
+                <a class="nav-link" href="{{ url_for('admin.upload_data') }}">
+                    <i class="fas fa-upload me-1"></i>
+                    Subir Datos
+                </a>
+                <a class="nav-link" href="{{ url_for('admin.view_logs') }}">
+                    <i class="fas fa-list me-1"></i>
+                    Logs
+                </a>
+                <a class="nav-link" href="{{ url_for('admin.logout') }}">
+                    <i class="fas fa-sign-out-alt me-1"></i>
+                    Salir
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12 d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">Gestión de Tokens API</h1>
+                    <p class="text-muted">Administra los tokens de acceso a la API</p>
+                </div>
+                <button class="btn btn-four-one" data-bs-toggle="modal" data-bs-target="#createTokenModal">
+                    <i class="fas fa-plus me-2"></i>
+                    Crear Token
+                </button>
+            </div>
+        </div>
+
+        <!-- Tokens List -->
+        <div class="row">
+            {% for token in tokens %}
+            <div class="col-md-6 col-xl-4 mb-4">
+                <div class="card token-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="card-title mb-0">{{ token.name }}</h6>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('admin.toggle_token', token_id=token.id) }}">
+                                        <i class="fas fa-{{ 'pause' if token.is_active else 'play' }} me-2"></i>
+                                        {{ 'Desactivar' if token.is_active else 'Activar' }}
+                                    </a>
+                                </li>
+                                <li>
+                                    <form method="POST" action="{{ url_for('admin.delete_token', token_id=token.id) }}" class="d-inline" 
+                                          onsubmit="return confirm('¿Estás seguro de eliminar este token?')">
+                                        <button type="submit" class="dropdown-item text-danger">
+                                            <i class="fas fa-trash me-2"></i>
+                                            Eliminar
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Token Status -->
+                        <div class="d-flex align-items-center mb-3">
+                            {% if token.is_active %}
+                                <span class="badge bg-success me-2">Activo</span>
+                            {% else %}
+                                <span class="badge bg-secondary me-2">Inactivo</span>
+                            {% endif %}
+                            
+                            {% if token.is_expired() %}
+                                <span class="badge bg-danger">Expirado</span>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Token String -->
+                        <div class="mb-3">
+                            <label class="form-label small text-muted">Token:</label>
+                            <div class="token-string d-flex justify-content-between align-items-center">
+                                <span id="token-{{ token.id }}">{{ token.token[:20] }}...</span>
+                                <button class="btn btn-sm btn-outline-primary copy-btn" 
+                                        onclick="copyToken('{{ token.token }}', {{ token.id }})"
+                                        title="Copiar token completo">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Usage Stats -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <small class="text-muted">Uso por hora:</small>
+                                <small class="text-muted">{{ token.requests_used }}/{{ token.requests_per_hour }}</small>
+                            </div>
+                            <div class="progress usage-progress">
+                                {% set usage_percent = (token.requests_used / token.requests_per_hour * 100) if token.requests_per_hour > 0 else 0 %}
+                                <div class="progress-bar bg-{{ 'warning' if usage_percent > 80 else 'primary' }}" 
+                                     style="width: {{ usage_percent }}%"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Metadata -->
+                        <div class="row text-muted small">
+                            <div class="col-6">
+                                <strong>Creado:</strong><br>
+                                {{ token.created_at.strftime('%d/%m/%Y') }}
+                            </div>
+                            <div class="col-6">
+                                <strong>Por:</strong><br>
+                                {{ token.created_by or 'Sistema' }}
+                            </div>
+                        </div>
+                        
+                        {% if token.expires_at %}
+                        <div class="mt-2 text-muted small">
+                            <strong>Expira:</strong> {{ token.expires_at.strftime('%d/%m/%Y %H:%M') }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            
+            {% if not tokens %}
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-key fa-3x text-muted mb-3"></i>
+                        <h5>No hay tokens creados</h5>
+                        <p class="text-muted">Crea tu primer token para permitir acceso a la API</p>
+                        <button class="btn btn-four-one" data-bs-toggle="modal" data-bs-target="#createTokenModal">
+                            <i class="fas fa-plus me-2"></i>
+                            Crear Primer Token
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Create Token Modal -->
+    <div class="modal fade" id="createTokenModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Crear Nuevo Token</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{{ url_for('admin.create_token') }}">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Nombre del Token *</label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   placeholder="Ej: API Cliente Principal" required>
+                            <div class="form-text">Nombre descriptivo para identificar el token</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="requests_per_hour" class="form-label">Límite por Hora</label>
+                            <input type="number" class="form-control" id="requests_per_hour" 
+                                   name="requests_per_hour" value="60" min="1" max="10000">
+                            <div class="form-text">Número máximo de requests por hora (por defecto: 60)</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="expires_days" class="form-label">Expiración (días)</label>
+                            <input type="number" class="form-control" id="expires_days" 
+                                   name="expires_days" min="1" max="365">
+                            <div class="form-text">Dejar vacío para que no expire</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-four-one">Crear Token</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function copyToken(token, tokenId) {
+            navigator.clipboard.writeText(token).then(() => {
+                // Show feedback
+                const button = document.querySelector(`#token-${tokenId}`).nextElementSibling;
+                const originalContent = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check text-success"></i>';
+                button.classList.add('text-success');
+                
+                setTimeout(() => {
+                    button.innerHTML = originalContent;
+                    button.classList.remove('text-success');
+                }, 2000);
+                
+                // Show toast or alert
+                const toast = document.createElement('div');
+                toast.className = 'toast show position-fixed top-0 end-0 m-3';
+                toast.innerHTML = `
+                    <div class="toast-body bg-success text-white">
+                        Token copiado al portapapeles
+                    </div>
+                `;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 3000);
+            }).catch(() => {
+                alert('Error al copiar el token');
+            });
+        }
+    </script>
+</body>
+</html>

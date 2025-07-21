@@ -4,19 +4,51 @@ from flask import Blueprint, request, jsonify, render_template, current_app
 from functools import wraps
 from collections import defaultdict
 from rnc_service import rnc_service
+from models import APIToken, db
 
 api_bp = Blueprint('api', __name__)
 
-# Simple rate limiting storage (in production, use Redis or similar)
+# Fallback rate limiting storage for requests without tokens
 request_counts = defaultdict(list)
-RATE_LIMIT_PER_MINUTE = 60
+RATE_LIMIT_PER_MINUTE = 10  # Reduced for non-token requests
 
-def rate_limit(max_requests=RATE_LIMIT_PER_MINUTE):
-    """Simple rate limiting decorator"""
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
+def token_or_rate_limit(f):
+    """Enhanced rate limiting with token support"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
+        
+        # Check for API token in headers or query params
+        token_value = request.headers.get('Authorization', '').replace('Bearer ', '') or request.args.get('token')
+        
+        if token_value:
+            # Token-based rate limiting
+            token = APIToken.query.filter_by(token=token_value, is_active=True).first()
+            
+            if not token:
+                return jsonify({
+                    "error": "Invalid token",
+                    "message": "The provided API token is invalid or inactive"
+                }), 401
+            
+            if token.is_expired():
+                return jsonify({
+                    "error": "Token expired",
+                    "message": "The provided API token has expired"
+                }), 401
+            
+            if not token.can_make_request():
+                return jsonify({
+                    "error": "Rate limit exceeded",
+                    "message": f"Token rate limit exceeded. Maximum {token.requests_per_hour} requests per hour allowed"
+                }), 429
+            
+            # Use the request
+            token.use_request()
+            logging.info(f"API Request from {client_ip} with token {token.name}: {request.method} {request.path}")
+            
+        else:
+            # IP-based rate limiting for requests without tokens
             current_time = time.time()
             
             # Clean old requests (older than 1 minute)
@@ -26,21 +58,22 @@ def rate_limit(max_requests=RATE_LIMIT_PER_MINUTE):
             ]
             
             # Check if rate limit exceeded
-            if len(request_counts[client_ip]) >= max_requests:
+            if len(request_counts[client_ip]) >= RATE_LIMIT_PER_MINUTE:
                 return jsonify({
                     "error": "Rate limit exceeded",
-                    "message": f"Maximum {max_requests} requests per minute allowed"
+                    "message": f"Maximum {RATE_LIMIT_PER_MINUTE} requests per minute allowed without token. Use an API token for higher limits."
                 }), 429
             
             # Add current request
             request_counts[client_ip].append(current_time)
-            
-            # Log the request
-            logging.info(f"API Request from {client_ip}: {request.method} {request.path}")
-            
-            return f(*args, **kwargs)
-        return decorated_function
-    return decorator
+            logging.info(f"API Request from {client_ip} (no token): {request.method} {request.path}")
+        
+        return f(*args, **kwargs)
+    return decorated_function
+
+def rate_limit(max_requests=RATE_LIMIT_PER_MINUTE):
+    """Legacy rate limiting decorator for backward compatibility"""
+    return token_or_rate_limit
 
 @api_bp.route('/')
 def index():

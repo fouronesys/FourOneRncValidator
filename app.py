@@ -31,10 +31,17 @@ with app.app_context():
     if RNCRecord.query.count() == 0:
         from data_importer import import_rnc_data
         import_rnc_data()
+    
+    # Initialize admin user
+    from admin_routes import init_admin_user
+    init_admin_user()
 
 # Import and register routes
 from api_routes import api_bp
+from admin_routes import admin_bp
+
 app.register_blueprint(api_bp)
+app.register_blueprint(admin_bp)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

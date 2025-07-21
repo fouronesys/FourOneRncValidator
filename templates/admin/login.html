@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Four One RNC Validator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --four-one-blue: #405DE6;
+            --four-one-blue-dark: #3651DB;
+            --four-one-blue-light: #5B7BEA;
+            --four-one-white: #FFFFFF;
+            --four-one-light-gray: #F8F9FA;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--four-one-blue) 0%, var(--four-one-blue-dark) 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 3rem;
+            max-width: 400px;
+            width: 100%;
+        }
+        
+        .logo-container {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: var(--four-one-blue);
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        
+        .logo-text {
+            color: var(--four-one-white);
+            font-size: 1.5rem;
+            font-weight: bold;
+            font-style: italic;
+        }
+        
+        .brand-title {
+            color: var(--four-one-blue);
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .brand-subtitle {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .form-control {
+            border-radius: 12px;
+            border: 2px solid #e9ecef;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: var(--four-one-blue);
+            box-shadow: 0 0 0 0.2rem rgba(64, 93, 230, 0.25);
+        }
+        
+        .btn-primary {
+            background: var(--four-one-blue);
+            border-color: var(--four-one-blue);
+            border-radius: 12px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: var(--four-one-blue-dark);
+            border-color: var(--four-one-blue-dark);
+            transform: translateY(-2px);
+        }
+        
+        .alert {
+            border-radius: 12px;
+            border: none;
+        }
+        
+        .instagram-link {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .instagram-link a {
+            color: var(--four-one-blue);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        
+        .instagram-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="logo-container">
+                <div class="logo">
+                    <span class="logo-text">41</span>
+                </div>
+                <h4 class="brand-title">Four One Solutions</h4>
+                <p class="brand-subtitle">Panel de Administración</p>
+            </div>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Usuario</label>
+                    <input type="text" class="form-control" id="username" name="username" required>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="password" class="form-label">Contraseña</label>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                </div>
+                
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-sign-in-alt me-2"></i>
+                        Iniciar Sesión
+                    </button>
+                </div>
+            </form>
+            
+            <div class="instagram-link">
+                <a href="https://instagram.com/fouronesolutionssrl" target="_blank">
+                    <i class="fab fa-instagram me-1"></i>
+                    @fouronesolutionssrl
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

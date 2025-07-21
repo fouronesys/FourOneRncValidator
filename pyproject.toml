@@ -10,4 +10,9 @@ dependencies = [
     "pandas>=2.3.1",
     "werkzeug>=3.1.3",
     "psycopg2-binary>=2.9.10",
+    "flask-login>=0.6.3",
+    "oauthlib>=3.3.1",
+    "pyjwt>=2.10.1",
+    "sqlalchemy>=2.0.41",
+    "flask-dance>=7.1.0",
 ]
