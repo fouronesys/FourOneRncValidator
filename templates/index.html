@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Four One RNC Validator - API de Verificación RNC</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-shield-alt me-2"></i>
+                Four One RNC Validator
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/docs">Documentación</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/api/status">Estado API</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section bg-gradient-primary text-white py-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold mb-4">
+                        API de Verificación RNC
+                        <span class="text-warning">Dominicana</span>
+                    </h1>
+                    <p class="lead mb-4">
+                        Valida y obtén información completa de RNCs dominicanos con nuestra API rápida y confiable. 
+                        Powered by Four One Technologies.
+                    </p>
+                    <div class="d-flex gap-3">
+                        <a href="/docs" class="btn btn-warning btn-lg px-4">
+                            <i class="fas fa-book me-2"></i>
+                            Ver Documentación
+                        </a>
+                        <a href="#demo" class="btn btn-outline-light btn-lg px-4">
+                            <i class="fas fa-play me-2"></i>
+                            Probar API
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6 text-center">
+                    <div class="api-illustration">
+                        <i class="fas fa-database fa-8x text-warning opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row text-center mb-5">
+                <div class="col-12">
+                    <h2 class="fw-bold mb-3">Características Principales</h2>
+                    <p class="text-muted">Todo lo que necesitas para validar RNCs dominicanos</p>
+                </div>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="feature-card text-center p-4">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-lightning-bolt fa-3x text-primary"></i>
+                        </div>
+                        <h4 class="fw-bold">Rápido y Eficiente</h4>
+                        <p class="text-muted">
+                            Búsquedas optimizadas que devuelven resultados en milisegundos.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card text-center p-4">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-shield-check fa-3x text-success"></i>
+                        </div>
+                        <h4 class="fw-bold">Datos Oficiales</h4>
+                        <p class="text-muted">
+                            Basado en la base de datos oficial de la DGII de República Dominicana.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card text-center p-4">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-code fa-3x text-info"></i>
+                        </div>
+                        <h4 class="fw-bold">Fácil Integración</h4>
+                        <p class="text-muted">
+                            API REST simple con respuestas JSON y documentación completa.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section id="demo" class="py-5 bg-light">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-6 mx-auto">
+                    <div class="demo-card bg-white p-4 rounded shadow">
+                        <h3 class="fw-bold mb-4 text-center">
+                            <i class="fas fa-search me-2"></i>
+                            Prueba la API
+                        </h3>
+                        <form id="rnc-form">
+                            <div class="mb-3">
+                                <label for="rnc-input" class="form-label">Ingresa un RNC:</label>
+                                <div class="input-group">
+                                    <input 
+                                        type="text" 
+                                        class="form-control form-control-lg" 
+                                        id="rnc-input" 
+                                        placeholder="Ej: 12345678901"
+                                        maxlength="11"
+                                    >
+                                    <button class="btn btn-primary" type="submit">
+                                        <i class="fas fa-search me-1"></i>
+                                        Validar
+                                    </button>
+                                </div>
+                                <div class="form-text">
+                                    Ingresa un RNC de 11 dígitos para validar
+                                </div>
+                            </div>
+                        </form>
+                        
+                        <!-- Results -->
+                        <div id="results" class="mt-4" style="display: none;">
+                            <div class="alert" id="result-alert">
+                                <div id="result-content"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Loading -->
+                        <div id="loading" class="text-center mt-3" style="display: none;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- API Endpoints Preview -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row text-center mb-5">
+                <div class="col-12">
+                    <h2 class="fw-bold mb-3">Endpoints Disponibles</h2>
+                    <p class="text-muted">Principales endpoints de nuestra API</p>
+                </div>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="endpoint-card p-4 border rounded">
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="badge bg-success me-3">GET</span>
+                            <code class="text-primary">/api/validate/{rnc}</code>
+                        </div>
+                        <h5 class="fw-bold">Validar RNC</h5>
+                        <p class="text-muted">
+                            Verifica si un RNC existe en la base de datos y devuelve su estado.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="endpoint-card p-4 border rounded">
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="badge bg-info me-3">GET</span>
+                            <code class="text-primary">/api/info/{rnc}</code>
+                        </div>
+                        <h5 class="fw-bold">Información Completa</h5>
+                        <p class="text-muted">
+                            Obtiene toda la información disponible para un RNC específico.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="endpoint-card p-4 border rounded">
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="badge bg-warning me-3">POST</span>
+                            <code class="text-primary">/api/search</code>
+                        </div>
+                        <h5 class="fw-bold">Búsqueda por Lotes</h5>
+                        <p class="text-muted">
+                            Valida múltiples RNCs en una sola petición (máximo 10).
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="endpoint-card p-4 border rounded">
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="badge bg-secondary me-3">GET</span>
+                            <code class="text-primary">/api/status</code>
+                        </div>
+                        <h5 class="fw-bold">Estado de la API</h5>
+                        <p class="text-muted">
+                            Información sobre el estado de la API y estadísticas de la base de datos.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0">
+                        &copy; 2025 Four One RNC Validator. Todos los derechos reservados.
+                    </p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p class="mb-0">
+                        <i class="fas fa-database me-1"></i>
+                        Powered by Four One Technologies
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

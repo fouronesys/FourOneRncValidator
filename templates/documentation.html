@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentación API - Four One RNC Validator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-shield-alt me-2"></i>
+                Four One RNC Validator
+            </a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/docs">Documentación</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/api/status">Estado API</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#introduction">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Introducción
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#authentication">
+                                <i class="fas fa-key me-2"></i>
+                                Autenticación
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#endpoints">
+                                <i class="fas fa-link me-2"></i>
+                                Endpoints
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#rate-limiting">
+                                <i class="fas fa-clock me-2"></i>
+                                Rate Limiting
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#error-handling">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Manejo de Errores
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#examples">
+                                <i class="fas fa-code me-2"></i>
+                                Ejemplos
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="py-4">
+                    <!-- Header -->
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+                        <h1 class="h2">
+                            <i class="fas fa-book me-2"></i>
+                            Documentación de la API
+                        </h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <div class="btn-group me-2">
+                                <span class="badge bg-success fs-6">v1.0.0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Database Status -->
+                    {% if stats.loaded %}
+                    <div class="alert alert-success" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Base de datos cargada correctamente:</strong> {{ stats.total_records | default(0) }} registros disponibles
+                    </div>
+                    {% else %}
+                    <div class="alert alert-danger" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <strong>Error:</strong> Base de datos no disponible
+                    </div>
+                    {% endif %}
+
+                    <!-- Introduction -->
+                    <section id="introduction" class="mb-5">
+                        <h2>Introducción</h2>
+                        <p class="lead">
+                            Four One RNC Validator es una API REST que permite validar y obtener información 
+                            de RNCs (Registro Nacional de Contribuyentes) dominicanos basándose en la base de datos oficial de la DGII.
+                        </p>
+                        
+                        <div class="row g-3 mb-4">
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h5 class="card-title text-primary">Base URL</h5>
+                                        <p class="card-text"><code>{{ request.host_url }}api</code></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h5 class="card-title text-success">Formato</h5>
+                                        <p class="card-text">JSON</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h5 class="card-title text-info">HTTPS</h5>
+                                        <p class="card-text">Soportado</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h5 class="card-title text-warning">Rate Limit</h5>
+                                        <p class="card-text">60 req/min</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Authentication -->
+                    <section id="authentication" class="mb-5">
+                        <h2>Autenticación</h2>
+                        <p>
+                            Actualmente la API no requiere autenticación. Todas las consultas son públicas 
+                            pero están sujetas a rate limiting para evitar abuso.
+                        </p>
+                    </section>
+
+                    <!-- Endpoints -->
+                    <section id="endpoints" class="mb-5">
+                        <h2>Endpoints</h2>
+
+                        <!-- Validate RNC -->
+                        <div class="endpoint-section mb-4">
+                            <h3>
+                                <span class="badge bg-success me-2">GET</span>
+                                Validar RNC
+                            </h3>
+                            <p>Verifica si un RNC existe en la base de datos.</p>
+                            
+                            <div class="code-block">
+                                <code>GET /api/validate/{rnc}</code>
+                            </div>
+
+                            <h5>Parámetros</h5>
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Parámetro</th>
+                                        <th>Tipo</th>
+                                        <th>Descripción</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>rnc</code></td>
+                                        <td>string</td>
+                                        <td>RNC de 11 dígitos a validar</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <h5>Respuesta de Éxito</h5>
+                            <pre><code class="language-json">{
+  "status": "success",
+  "rnc": "12345678901",
+  "exists": true,
+  "message": "RNC found in database"
+}</code></pre>
+
+                            <h5>Respuesta de Error</h5>
+                            <pre><code class="language-json">{
+  "status": "not_found",
+  "rnc": "12345678901",
+  "exists": false,
+  "message": "RNC not found in database"
+}</code></pre>
+                        </div>
+
+                        <!-- Get RNC Info -->
+                        <div class="endpoint-section mb-4">
+                            <h3>
+                                <span class="badge bg-info me-2">GET</span>
+                                Información del RNC
+                            </h3>
+                            <p>Obtiene toda la información disponible para un RNC específico.</p>
+                            
+                            <div class="code-block">
+                                <code>GET /api/info/{rnc}</code>
+                            </div>
+
+                            <h5>Respuesta de Éxito</h5>
+                            <pre><code class="language-json">{
+  "status": "success",
+  "rnc": "12345678901",
+  "exists": true,
+  "data": {
+    "nombre": "EMPRESA EJEMPLO SRL",
+    "estado": "ACTIVO",
+    "categoria": "PERSONA JURIDICA",
+    "regimen": "ORDINARIO"
+  }
+}</code></pre>
+                        </div>
+
+                        <!-- Batch Search -->
+                        <div class="endpoint-section mb-4">
+                            <h3>
+                                <span class="badge bg-warning me-2">POST</span>
+                                Búsqueda por Lotes
+                            </h3>
+                            <p>Valida múltiples RNCs en una sola petición (máximo 10).</p>
+                            
+                            <div class="code-block">
+                                <code>POST /api/search</code>
+                            </div>
+
+                            <h5>Cuerpo de la Petición</h5>
+                            <pre><code class="language-json">{
+  "rncs": ["12345678901", "10987654321"]
+}</code></pre>
+
+                            <h5>Respuesta</h5>
+                            <pre><code class="language-json">{
+  "status": "success",
+  "results": [
+    {
+      "rnc": "12345678901",
+      "exists": true,
+      "data": { ... }
+    },
+    {
+      "rnc": "10987654321",
+      "exists": false,
+      "message": "RNC not found in database"
+    }
+  ],
+  "total": 2
+}</code></pre>
+                        </div>
+
+                        <!-- API Status -->
+                        <div class="endpoint-section mb-4">
+                            <h3>
+                                <span class="badge bg-secondary me-2">GET</span>
+                                Estado de la API
+                            </h3>
+                            <p>Información sobre el estado de la API y estadísticas de la base de datos.</p>
+                            
+                            <div class="code-block">
+                                <code>GET /api/status</code>
+                            </div>
+
+                            <h5>Respuesta</h5>
+                            <pre><code class="language-json">{
+  "status": "online",
+  "database": {
+    "loaded": true,
+    "total_records": 150000,
+    "columns": ["RNC", "NOMBRE", "ESTADO"]
+  },
+  "api_version": "1.0.0",
+  "brand": "Four One RNC Validator"
+}</code></pre>
+                        </div>
+                    </section>
+
+                    <!-- Rate Limiting -->
+                    <section id="rate-limiting" class="mb-5">
+                        <h2>Rate Limiting</h2>
+                        <p>Para mantener la calidad del servicio, implementamos los siguientes límites:</p>
+                        
+                        <ul>
+                            <li><strong>Endpoints GET:</strong> 60 peticiones por minuto por IP</li>
+                            <li><strong>Endpoint POST:</strong> 30 peticiones por minuto por IP</li>
+                            <li><strong>Búsqueda por lotes:</strong> Máximo 10 RNCs por petición</li>
+                        </ul>
+
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Límite excedido:</strong> Si superas el límite, recibirás un error 429 con un mensaje explicativo.
+                        </div>
+                    </section>
+
+                    <!-- Error Handling -->
+                    <section id="error-handling" class="mb-5">
+                        <h2>Manejo de Errores</h2>
+                        <p>La API utiliza códigos de estado HTTP estándar para indicar el éxito o fallo de las peticiones.</p>
+
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Descripción</th>
+                                    <th>Causa</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>200</code></td>
+                                    <td>OK</td>
+                                    <td>Petición exitosa</td>
+                                </tr>
+                                <tr>
+                                    <td><code>400</code></td>
+                                    <td>Bad Request</td>
+                                    <td>Formato de RNC inválido o parámetros incorrectos</td>
+                                </tr>
+                                <tr>
+                                    <td><code>404</code></td>
+                                    <td>Not Found</td>
+                                    <td>RNC no encontrado en la base de datos</td>
+                                </tr>
+                                <tr>
+                                    <td><code>429</code></td>
+                                    <td>Too Many Requests</td>
+                                    <td>Rate limit excedido</td>
+                                </tr>
+                                <tr>
+                                    <td><code>500</code></td>
+                                    <td>Internal Server Error</td>
+                                    <td>Error interno del servidor</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </section>
+
+                    <!-- Examples -->
+                    <section id="examples" class="mb-5">
+                        <h2>Ejemplos de Uso</h2>
+
+                        <!-- cURL Examples -->
+                        <h4>cURL</h4>
+                        <div class="example-section">
+                            <h5>Validar un RNC:</h5>
+                            <pre><code class="language-bash">curl -X GET "{{ request.host_url }}api/validate/12345678901"</code></pre>
+
+                            <h5>Obtener información completa:</h5>
+                            <pre><code class="language-bash">curl -X GET "{{ request.host_url }}api/info/12345678901"</code></pre>
+
+                            <h5>Búsqueda por lotes:</h5>
+                            <pre><code class="language-bash">curl -X POST "{{ request.host_url }}api/search" \
+  -H "Content-Type: application/json" \
+  -d '{"rncs": ["12345678901", "10987654321"]}'</code></pre>
+                        </div>
+
+                        <!-- JavaScript Examples -->
+                        <h4>JavaScript (Fetch API)</h4>
+                        <div class="example-section">
+                            <h5>Validar un RNC:</h5>
+                            <pre><code class="language-javascript">fetch('{{ request.host_url }}api/validate/12345678901')
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));</code></pre>
+
+                            <h5>Búsqueda por lotes:</h5>
+                            <pre><code class="language-javascript">fetch('{{ request.host_url }}api/search', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    rncs: ['12345678901', '10987654321']
+  })
+})
+.then(response => response.json())
+.then(data => console.log(data));</code></pre>
+                        </div>
+
+                        <!-- Python Examples -->
+                        <h4>Python (Requests)</h4>
+                        <div class="example-section">
+                            <h5>Validar un RNC:</h5>
+                            <pre><code class="language-python">import requests
+
+response = requests.get('{{ request.host_url }}api/validate/12345678901')
+data = response.json()
+print(data)</code></pre>
+
+                            <h5>Búsqueda por lotes:</h5>
+                            <pre><code class="language-python">import requests
+
+payload = {
+    'rncs': ['12345678901', '10987654321']
+}
+response = requests.post('{{ request.host_url }}api/search', json=payload)
+data = response.json()
+print(data)</code></pre>
+                        </div>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>
