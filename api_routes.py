@@ -60,7 +60,7 @@ def validate_rnc(rnc):
     try:
         exists, result = rnc_service.search_rnc(rnc)
         
-        if exists:
+        if exists and result:
             return jsonify({
                 "status": "success",
                 "rnc": result["rnc"],
@@ -68,6 +68,7 @@ def validate_rnc(rnc):
                 "message": "RNC found in database"
             })
         else:
+            result = result or {}
             return jsonify({
                 "status": "error" if "error" in result else "not_found",
                 "rnc": result.get("rnc", rnc),
@@ -89,7 +90,7 @@ def get_rnc_info(rnc):
     try:
         exists, result = rnc_service.search_rnc(rnc)
         
-        if exists:
+        if exists and result:
             return jsonify({
                 "status": "success",
                 "rnc": result["rnc"],
@@ -97,6 +98,7 @@ def get_rnc_info(rnc):
                 "data": result["data"]
             })
         else:
+            result = result or {}
             return jsonify({
                 "status": "error" if "error" in result else "not_found",
                 "rnc": result.get("rnc", rnc),
@@ -154,13 +156,14 @@ def search_rncs():
         for rnc in rncs:
             exists, result = rnc_service.search_rnc(str(rnc))
             
-            if exists:
+            if exists and result:
                 results.append({
                     "rnc": result["rnc"],
                     "exists": True,
                     "data": result["data"]
                 })
             else:
+                result = result or {}
                 results.append({
                     "rnc": result.get("rnc", rnc),
                     "exists": False,

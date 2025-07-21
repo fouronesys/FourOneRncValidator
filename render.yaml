@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: four-one-rnc-validator
+    env: python
+    plan: free
+    buildCommand: pip install flask pandas gunicorn werkzeug
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 60 main:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: FLASK_ENV
+        value: "production"

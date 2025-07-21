@@ -25,20 +25,20 @@ class RNCService:
             
             for encoding in encodings:
                 try:
-                    logging.info(f"Trying to load RNC data with encoding: {encoding}")
+                    logging.info(f"Loading RNC data with encoding: {encoding}")
                     
                     # Read the file with the current encoding
+                    # Use low_memory=False to prevent mixed type warnings
                     self.rnc_data = pd.read_csv(
                         file_path,
                         sep='|',  # Common separator for DGII files
                         encoding=encoding,
                         dtype=str,  # Keep all data as strings to preserve RNC format
-                        na_filter=False  # Don't convert empty strings to NaN
+                        na_filter=False,  # Don't convert empty strings to NaN
+                        low_memory=False  # Read file in one pass for better performance
                     )
                     
-                    logging.info(f"Successfully loaded RNC data with encoding: {encoding}")
-                    logging.info(f"Loaded {len(self.rnc_data)} RNC records")
-                    logging.info(f"Columns: {list(self.rnc_data.columns)}")
+                    logging.info(f"Successfully loaded {len(self.rnc_data)} RNC records")
                     
                     # Clean column names (remove extra spaces)
                     self.rnc_data.columns = [col.strip() for col in self.rnc_data.columns]
@@ -62,6 +62,7 @@ class RNCService:
                         # Create an index for faster lookups
                         self.rnc_data.set_index(rnc_column, inplace=True)
                         logging.info(f"Using column '{rnc_column}' as RNC identifier")
+                        logging.info(f"Database ready with {len(self.rnc_data)} records")
                     
                     self.data_loaded = True
                     break

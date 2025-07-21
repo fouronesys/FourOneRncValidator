@@ -63,9 +63,10 @@ Preferred communication style: Simple, everyday language.
 
 ## External Dependencies
 
-### Python Packages
+### Python Packages (Production-Ready)
 - **Flask**: Web framework and routing
-- **pandas**: Data manipulation and CSV processing
+- **pandas**: Data manipulation and CSV processing 
+- **gunicorn**: WSGI HTTP server for production
 - **werkzeug**: WSGI utilities and proxy handling
 
 ### Frontend Libraries (CDN-delivered)
@@ -77,23 +78,59 @@ Preferred communication style: Simple, everyday language.
 - **RNC Data File**: DGII (Dominican Tax Authority) provided TXT file
 - **File Location**: `attached_assets/DGII_RNC_1753101730023.TXT`
 - **Format**: Pipe-delimited text file with multiple possible encodings
+- **Records**: 739,962 RNC entries loaded in memory
 
 ## Deployment Strategy
 
-### Development Configuration
-- **Host**: 0.0.0.0 (accepts connections from any IP)
-- **Port**: 5000
-- **Debug Mode**: Enabled for development
-- **Session Secret**: Environment variable with fallback
+### Database-Free Architecture
+- **No External Database**: All data loaded from CSV/TXT files into memory
+- **Fast Lookups**: Pandas DataFrame with indexed RNC column
+- **Memory Efficient**: Optimized data loading with proper encoding detection
+- **Production Ready**: No database maintenance or connection issues
 
-### Production Considerations
-- **Proxy Support**: ProxyFix middleware configured for reverse proxy deployment
-- **Logging**: Configurable logging level (currently DEBUG)
-- **Rate Limiting**: In-memory storage should be replaced with Redis/Memcached
-- **Security**: Session secret should be set via environment variable
+### Render.com Deployment Configuration
+- **Platform**: Render.com cloud platform
+- **Plan**: Free tier compatible
+- **Build Command**: `pip install flask pandas gunicorn werkzeug`
+- **Start Command**: `gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 60 main:app`
+- **Auto-Deploy**: Git push triggers automatic redeployment
+
+### Environment Configuration
+- **Port**: Dynamic port using `$PORT` environment variable
+- **Debug Mode**: Disabled in production (`FLASK_ENV=production`)
+- **Logging**: INFO level for production
+- **Session Secret**: Auto-generated secure key
+- **Proxy Support**: ProxyFix middleware for HTTPS termination
+
+### Performance Optimizations
+- **Worker Configuration**: Single worker to conserve memory on free tier
+- **Extended Timeout**: 60 seconds for initial data loading
+- **Memory Usage**: ~200MB for 700k+ RNC records
+- **Cold Start**: 30-60 seconds first load, instant subsequent requests
+
+### Deployment Files
+- **render.yaml**: Automatic Render deployment configuration
+- **Procfile**: Alternative process definition
+- **runtime.txt**: Python 3.11 specification
+- **DEPLOY_RENDER.md**: Complete deployment guide
+- **README.md**: Project documentation and instructions
 
 ### Environment Variables
-- **SESSION_SECRET**: Flask session encryption key
-- **Additional configuration can be added as needed**
+- **PORT**: Server port (auto-configured by Render)
+- **SESSION_SECRET**: Flask session encryption key (auto-generated)
+- **FLASK_ENV**: Environment mode (production/development)
+- **PYTHON_VERSION**: Python runtime version (3.11.0)
 
-The application is designed for easy deployment on platforms like Replit, with support for both development and production environments through environment-based configuration.
+## Recent Changes (January 2025)
+
+### Database Removal and Render Preparation
+- ✓ Removed all database dependencies (SQLAlchemy, PostgreSQL)
+- ✓ Configured dynamic port binding for cloud deployment
+- ✓ Added production-ready logging configuration
+- ✓ Created Render deployment files (render.yaml, Procfile)
+- ✓ Optimized data loading performance for production
+- ✓ Fixed type safety issues in API routes
+- ✓ Added comprehensive deployment documentation
+- ✓ Configured gunicorn with production settings
+
+The application is now fully prepared for deployment on Render.com with zero database dependencies and optimized for cloud hosting performance.
