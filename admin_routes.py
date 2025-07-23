@@ -210,6 +210,58 @@ def view_logs():
     )
     return render_template('admin/logs.html', logs=logs)
 
+@admin_bp.route('/manual-import', methods=['POST'])
+@admin_required
+def manual_import():
+    """Manually reimport all data from the main DGII file"""
+    try:
+        file_path = "attached_assets/DGII_RNC_1753101730023.TXT"
+        
+        if not os.path.exists(file_path):
+            flash('Archivo DGII no encontrado', 'error')
+            return redirect(url_for('admin.dashboard'))
+        
+        # Log the import attempt
+        log_entry = DataUpdateLog()
+        log_entry.filename = "DGII_RNC_1753101730023.TXT"
+        log_entry.admin_user = session.get('admin_username')
+        log_entry.status = 'processing'
+        db.session.add(log_entry)
+        db.session.commit()
+        
+        start_time = time.time()
+        
+        try:
+            from data_importer import DataImporter
+            importer = DataImporter()
+            result = importer.import_from_file(file_path, update_existing=True)
+            import_duration = time.time() - start_time
+            
+            # Update log with results
+            log_entry.records_imported = result.get('total_imported', 0)
+            log_entry.records_updated = result.get('updated', 0)
+            log_entry.records_new = result.get('new', 0)
+            log_entry.import_duration = import_duration
+            log_entry.status = 'success'
+            db.session.commit()
+            
+            flash(f'Importación manual completada: {result.get("total_imported", 0)} registros procesados, {result.get("new", 0)} nuevos, {result.get("updated", 0)} actualizados en {import_duration:.2f} segundos', 'success')
+            logging.info(f'Manual import successful by {session.get("admin_username")}: {result}')
+            
+        except Exception as import_error:
+            log_entry.status = 'error'
+            log_entry.error_message = str(import_error)
+            db.session.commit()
+            
+            flash(f'Error en importación manual: {str(import_error)}', 'error')
+            logging.error(f'Manual import failed: {import_error}')
+            
+    except Exception as e:
+        flash(f'Error al procesar importación manual: {str(e)}', 'error')
+        logging.error(f'Manual import processing error: {e}')
+    
+    return redirect(url_for('admin.dashboard'))
+
 def allowed_file(filename):
     """Check if uploaded file type is allowed"""
     ALLOWED_EXTENSIONS = {'txt', 'csv'}

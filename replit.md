@@ -125,7 +125,27 @@ Preferred communication style: Simple, everyday language.
 - **FLASK_ENV**: Environment mode (production/development)
 - **PYTHON_VERSION**: Python runtime version (3.11.0)
 
-## Recent Changes (January 2025)
+## Recent Changes (July 2025)
+
+### Fixed RNC Validation & Enhanced Data Import
+- ✓ Fixed RNC validation to support both 9-digit and 11-digit RNCs (Dominican standard)
+- ✓ Enhanced data importer with better batch processing (5000 records per batch)
+- ✓ Added comprehensive DataImporter class with update/insert capabilities  
+- ✓ Improved error handling with individual record fallback on batch failures
+- ✓ Added manual reimport functionality for admin users
+- ✓ Fixed all LSP diagnostics and code quality issues
+- ✓ Enhanced admin dashboard with manual import button
+- ✓ Updated validation messages to reflect 9/11 digit support
+- ✓ Optimized database operations to handle 740K+ records efficiently
+
+### Database & Performance Improvements
+- ✓ PostgreSQL database properly configured and connected
+- ✓ Fixed SQLAlchemy URL parsing issues
+- ✓ Enhanced batch processing for better memory management
+- ✓ Added proper error handling for duplicate records
+- ✓ Improved import logging and progress tracking
+
+## Previous Changes (January 2025)
 
 ### Complete Admin Panel & Token System Implementation
 - ✓ Created comprehensive admin authentication system with secure login

@@ -10,25 +10,26 @@ class RNCService:
         logging.info("RNC Service initialized with PostgreSQL backend")
     
     def validate_rnc_format(self, rnc: str) -> bool:
-        """Validate RNC format (should be 11 digits)"""
+        """Validate RNC format (can be 9 or 11 digits)"""
         if not rnc:
             return False
         
         # Remove any spaces or dashes
         clean_rnc = re.sub(r'[^0-9]', '', rnc)
         
-        # Dominican RNCs should be 11 digits
-        return len(clean_rnc) == 11 and clean_rnc.isdigit()
+        # Dominican RNCs can be 9 or 11 digits
+        return clean_rnc.isdigit() and len(clean_rnc) in [9, 11]
     
     def search_rnc(self, rnc: str) -> Tuple[bool, Optional[Dict]]:
         """Search for RNC in the database"""
+        clean_rnc = ""
         try:
             # Clean the input RNC
             clean_rnc = re.sub(r'[^0-9]', '', rnc)
             
             # Validate format
             if not self.validate_rnc_format(clean_rnc):
-                return False, {"error": "Invalid RNC format. RNC must be 11 digits."}
+                return False, {"error": "Invalid RNC format. RNC must be 9 or 11 digits."}
             
             # Search in database
             record = RNCRecord.query.filter_by(rnc=clean_rnc).first()
