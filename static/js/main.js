@@ -34,8 +34,8 @@ function initRNCValidator() {
             return;
         }
         
-        if (rnc.length !== 11) {
-            showError('El RNC debe tener exactamente 11 dígitos');
+        if (rnc.length !== 9 && rnc.length !== 11) {
+            showError('El RNC debe tener 9 o 11 dígitos');
             return;
         }
         
