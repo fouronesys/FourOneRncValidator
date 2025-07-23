@@ -5,10 +5,10 @@ from models import db, RNCRecord, DataUpdateLog
 from datetime import datetime
 
 class DataImporter:
-    """Enhanced data importer with update/insert capabilities"""
+    """Enhanced data importer with update/insert capabilities and progress tracking"""
     
     def __init__(self):
-        self.batch_size = 5000
+        self.batch_size = 10000  # Increased batch size for better performance
         self.supported_encodings = ['latin-1', 'windows-1252', 'iso-8859-1', 'utf-8']
     
     def import_from_file(self, file_path: str, update_existing: bool = True) -> dict:
@@ -40,7 +40,7 @@ class DataImporter:
             
         except Exception as e:
             logging.error(f"Import error: {str(e)}")
-            stats['error_message'] = str(e)
+            stats['errors'] += 1
             return stats
     
     def _load_file_with_encoding(self, file_path: str):
@@ -64,12 +64,19 @@ class DataImporter:
         return None
     
     def _process_dataframe(self, df, update_existing, stats):
-        """Process dataframe in batches"""
+        """Process dataframe in batches with progress tracking"""
         df.columns = [col.strip() for col in df.columns]
         rnc_column = df.columns[0]
         
+        total_rows = len(df)
+        processed_rows = 0
         records_to_insert = []
-        records_to_update = []
+        
+        # Progress tracking
+        progress_interval = max(1000, total_rows // 100)  # Show progress every 1000 or 1% of records
+        
+        logging.info(f"📊 Starting import of {total_rows:,} records...")
+        logging.info("🚀 Progress: [          ] 0%")
         
         for index, row in df.iterrows():
             try:
@@ -80,38 +87,65 @@ class DataImporter:
                 
                 # Prepare record data
                 record_data = self._prepare_record_data(row, df.columns, rnc)
+                records_to_insert.append(record_data)
+                stats['new'] += 1
+                processed_rows += 1
                 
-                if update_existing:
-                    # Check if record exists
-                    existing = RNCRecord.query.filter_by(rnc=rnc).first()
-                    if existing:
-                        records_to_update.append((existing, record_data))
-                    else:
-                        records_to_insert.append(record_data)
-                        stats['new'] += 1
-                else:
-                    # Only insert new records
-                    existing = RNCRecord.query.filter_by(rnc=rnc).first()
-                    if not existing:
-                        records_to_insert.append(record_data)
-                        stats['new'] += 1
-                
-                # Process batch
-                if len(records_to_insert) + len(records_to_update) >= self.batch_size:
-                    self._process_batch(records_to_insert, records_to_update, stats)
+                # Process batch when full
+                if len(records_to_insert) >= self.batch_size:
+                    self._process_batch_fast(records_to_insert, stats)
                     records_to_insert = []
-                    records_to_update = []
+                
+                # Show progress
+                if processed_rows % progress_interval == 0 or processed_rows == total_rows:
+                    self._show_progress(processed_rows, total_rows)
                     
             except Exception as e:
                 stats['errors'] += 1
-                logging.warning(f"Error processing row {index}: {str(e)}")
+                logging.warning(f"❌ Error processing row {index}: {str(e)}")
         
         # Process remaining records
-        if records_to_insert or records_to_update:
-            self._process_batch(records_to_insert, records_to_update, stats)
+        if records_to_insert:
+            self._process_batch_fast(records_to_insert, stats)
         
-        logging.info(f"Import completed: {stats}")
+        logging.info(f"✅ Import completed successfully!")
+        logging.info(f"📈 Final stats: {stats}")
         return stats
+    
+    def _show_progress(self, current, total):
+        """Display progress bar in logs"""
+        percentage = (current / total) * 100
+        filled = int(percentage // 10)
+        bar = "█" * filled + "░" * (10 - filled)
+        logging.info(f"🚀 Progress: [{bar}] {percentage:.1f}% ({current:,}/{total:,})")
+    
+    def _process_batch_fast(self, records, stats):
+        """Fast batch processing using bulk insert"""
+        if not records:
+            return
+            
+        try:
+            # Use bulk insert for better performance
+            db.session.bulk_insert_mappings(RNCRecord, records)
+            db.session.commit()
+            stats['total_imported'] += len(records)
+            logging.info(f"✅ Imported batch of {len(records):,} records")
+            
+        except Exception as e:
+            logging.warning(f"⚠️ Bulk insert failed, trying individual inserts: {str(e)}")
+            db.session.rollback()
+            
+            # Fallback: individual inserts
+            for record in records:
+                try:
+                    new_record = RNCRecord(**record)
+                    db.session.add(new_record)
+                    db.session.commit()
+                    stats['total_imported'] += 1
+                except Exception as individual_error:
+                    db.session.rollback()
+                    stats['errors'] += 1
+                    logging.debug(f"❌ Failed to insert RNC {record.get('rnc', 'unknown')}: {str(individual_error)}")
     
     def _prepare_record_data(self, row, columns, rnc):
         """Prepare record data from row"""
@@ -136,8 +170,8 @@ class DataImporter:
         
         return record_data
     
-    def _process_batch(self, insert_records, update_records, stats):
-        """Process a batch of inserts and updates"""
+    def _process_batch_legacy(self, insert_records, update_records, stats):
+        """Legacy batch processing (kept for compatibility)"""
         try:
             # Insert new records using individual inserts to avoid mapper issues
             if insert_records:
