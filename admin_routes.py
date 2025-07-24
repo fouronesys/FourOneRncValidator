@@ -272,9 +272,9 @@ def init_admin_user():
     """Create default admin user if none exists"""
     if AdminUser.query.count() == 0:
         admin = AdminUser()
-        admin.username = 'admin'
+        admin.username = 'admin@fourone.com.do'
         admin.email = 'admin@fouronesolutions.com'
-        admin.set_password('admin123')  # Change this in production!
+        admin.set_password('PSzorro99**')  # Change this in production!
         db.session.add(admin)
         db.session.commit()
-        logging.info('Default admin user created: admin/admin123')
+        logging.info('Default admin user created')

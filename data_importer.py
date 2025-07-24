@@ -64,13 +64,24 @@ class DataImporter:
         return None
     
     def _process_dataframe(self, df, update_existing, stats):
-        """Process dataframe in batches with progress tracking"""
+        """Process dataframe in batches with progress tracking and smart duplicate handling"""
         df.columns = [col.strip() for col in df.columns]
         rnc_column = df.columns[0]
         
         total_rows = len(df)
         processed_rows = 0
         records_to_insert = []
+        
+        # Get existing RNCs for duplicate checking
+        logging.info("🔍 Loading existing RNCs for duplicate checking...")
+        existing_rncs = set()
+        try:
+            from sqlalchemy import text
+            existing_results = db.session.execute(text("SELECT rnc FROM rnc_records")).fetchall()
+            existing_rncs = {row[0] for row in existing_results}
+            logging.info(f"📋 Found {len(existing_rncs):,} existing RNCs")
+        except Exception as e:
+            logging.warning(f"⚠️ Could not load existing RNCs: {e}")
         
         # Progress tracking
         progress_interval = max(1000, total_rows // 100)  # Show progress every 1000 or 1% of records
@@ -83,17 +94,25 @@ class DataImporter:
                 # Extract and validate RNC
                 rnc = str(row[rnc_column]).strip().replace(' ', '')
                 if not rnc.isdigit() or len(rnc) not in [9, 11]:
+                    stats['errors'] += 1
+                    processed_rows += 1
+                    continue
+                
+                # Skip if already exists
+                if rnc in existing_rncs:
+                    processed_rows += 1
                     continue
                 
                 # Prepare record data
                 record_data = self._prepare_record_data(row, df.columns, rnc)
                 records_to_insert.append(record_data)
+                existing_rncs.add(rnc)  # Add to set to avoid processing again
                 stats['new'] += 1
                 processed_rows += 1
                 
                 # Process batch when full
                 if len(records_to_insert) >= self.batch_size:
-                    self._process_batch_fast(records_to_insert, stats)
+                    self._process_batch_smart(records_to_insert, stats)
                     records_to_insert = []
                 
                 # Show progress
@@ -102,14 +121,19 @@ class DataImporter:
                     
             except Exception as e:
                 stats['errors'] += 1
+                processed_rows += 1
                 logging.warning(f"❌ Error processing row {index}: {str(e)}")
         
         # Process remaining records
         if records_to_insert:
-            self._process_batch_fast(records_to_insert, stats)
+            self._process_batch_smart(records_to_insert, stats)
         
-        logging.info(f"✅ Import completed successfully!")
-        logging.info(f"📈 Final stats: {stats}")
+        logging.info("🎉 Import process completed!")
+        logging.info(f"📊 Final Statistics:")
+        logging.info(f"  ✅ Total processed: {processed_rows:,}")
+        logging.info(f"  ✅ New records imported: {stats['total_imported']:,}")
+        logging.info(f"  ⚠️ Errors/skipped: {stats['errors']:,}")
+        logging.info("🏁 Status: COMPLETED")
         return stats
     
     def _show_progress(self, current, total):
@@ -119,8 +143,8 @@ class DataImporter:
         bar = "█" * filled + "░" * (10 - filled)
         logging.info(f"🚀 Progress: [{bar}] {percentage:.1f}% ({current:,}/{total:,})")
     
-    def _process_batch_fast(self, records, stats):
-        """Fast batch processing using bulk insert"""
+    def _process_batch_smart(self, records, stats):
+        """Smart batch processing with duplicate handling"""
         if not records:
             return
             
@@ -129,23 +153,34 @@ class DataImporter:
             db.session.bulk_insert_mappings(RNCRecord, records)
             db.session.commit()
             stats['total_imported'] += len(records)
-            logging.info(f"✅ Imported batch of {len(records):,} records")
+            logging.info(f"💾 Imported batch of {len(records):,} records")
             
         except Exception as e:
-            logging.warning(f"⚠️ Bulk insert failed, trying individual inserts: {str(e)}")
+            logging.warning(f"⚠️ Bulk insert failed, processing individually...")
             db.session.rollback()
             
-            # Fallback: individual inserts
+            # Process individually with ON CONFLICT handling
+            successful = 0
             for record in records:
                 try:
-                    new_record = RNCRecord(**record)
-                    db.session.add(new_record)
-                    db.session.commit()
-                    stats['total_imported'] += 1
+                    # Check if exists first using ORM
+                    existing = RNCRecord.query.filter_by(rnc=record['rnc']).first()
+                    
+                    if not existing:
+                        new_record = RNCRecord(**record)
+                        db.session.add(new_record)
+                        db.session.commit()
+                        successful += 1
+                    # Don't count duplicates as errors
+                        
                 except Exception as individual_error:
                     db.session.rollback()
                     stats['errors'] += 1
                     logging.debug(f"❌ Failed to insert RNC {record.get('rnc', 'unknown')}: {str(individual_error)}")
+            
+            stats['total_imported'] += successful
+            if successful > 0:
+                logging.info(f"💾 Imported {successful:,} records individually")
     
     def _prepare_record_data(self, row, columns, rnc):
         """Prepare record data from row"""
