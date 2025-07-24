@@ -8,7 +8,7 @@ class DataImporter:
     """Enhanced data importer with update/insert capabilities and progress tracking"""
     
     def __init__(self):
-        self.batch_size = 10000  # Increased batch size for better performance
+        self.batch_size = 5000  # Smaller batch size to prevent timeouts
         self.supported_encodings = ['latin-1', 'windows-1252', 'iso-8859-1', 'utf-8']
     
     def import_from_file(self, file_path: str, update_existing: bool = True) -> dict:
@@ -72,19 +72,22 @@ class DataImporter:
         processed_rows = 0
         records_to_insert = []
         
-        # Get existing RNCs for duplicate checking
-        logging.info("🔍 Loading existing RNCs for duplicate checking...")
+        # For reimports, skip the existing RNC loading to avoid timeout
         existing_rncs = set()
-        try:
-            from sqlalchemy import text
-            existing_results = db.session.execute(text("SELECT rnc FROM rnc_records")).fetchall()
-            existing_rncs = {row[0] for row in existing_results}
-            logging.info(f"📋 Found {len(existing_rncs):,} existing RNCs")
-        except Exception as e:
-            logging.warning(f"⚠️ Could not load existing RNCs: {e}")
+        if not update_existing:
+            logging.info("🔍 Loading existing RNCs for duplicate checking...")
+            try:
+                from sqlalchemy import text
+                existing_results = db.session.execute(text("SELECT rnc FROM rnc_records")).fetchall()
+                existing_rncs = {row[0] for row in existing_results}
+                logging.info(f"📋 Found {len(existing_rncs):,} existing RNCs")
+            except Exception as e:
+                logging.warning(f"⚠️ Could not load existing RNCs: {e}")
+        else:
+            logging.info("🔄 Reimport mode: will check duplicates during processing")
         
         # Progress tracking
-        progress_interval = max(1000, total_rows // 100)  # Show progress every 1000 or 1% of records
+        progress_interval = max(500, total_rows // 200)  # More frequent updates
         
         logging.info(f"📊 Starting import of {total_rows:,} records...")
         logging.info("🚀 Progress: [          ] 0%")
@@ -98,26 +101,33 @@ class DataImporter:
                     processed_rows += 1
                     continue
                 
-                # Skip if already exists
-                if rnc in existing_rncs:
+                # Skip if already exists (only for initial imports)
+                if not update_existing and rnc in existing_rncs:
                     processed_rows += 1
                     continue
                 
                 # Prepare record data
                 record_data = self._prepare_record_data(row, df.columns, rnc)
                 records_to_insert.append(record_data)
-                existing_rncs.add(rnc)  # Add to set to avoid processing again
+                
+                if not update_existing:
+                    existing_rncs.add(rnc)  # Add to set to avoid processing again
+                
                 stats['new'] += 1
                 processed_rows += 1
                 
-                # Process batch when full
-                if len(records_to_insert) >= self.batch_size:
+                # Process smaller batches for better responsiveness
+                if len(records_to_insert) >= min(self.batch_size, 5000):
                     self._process_batch_smart(records_to_insert, stats)
                     records_to_insert = []
                 
-                # Show progress
+                # Show progress more frequently
                 if processed_rows % progress_interval == 0 or processed_rows == total_rows:
                     self._show_progress(processed_rows, total_rows)
+                    
+                # Yield control occasionally to prevent timeout
+                if processed_rows % 1000 == 0:
+                    db.session.flush()
                     
             except Exception as e:
                 stats['errors'] += 1

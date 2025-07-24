@@ -231,10 +231,16 @@ def manual_import():
         
         start_time = time.time()
         
+        # Enhanced logging for progress tracking
+        logging.info(f"🚀 Manual import initiated by {session.get('admin_username')}")
+        logging.info("📊 Import will show progress in application logs")
+        
         try:
             from data_importer import DataImporter
             importer = DataImporter()
-            result = importer.import_from_file(file_path, update_existing=True)
+            
+            # Use update_existing=False for faster processing (skips existing records)
+            result = importer.import_from_file(file_path, update_existing=False)
             import_duration = time.time() - start_time
             
             # Update log with results
@@ -245,20 +251,22 @@ def manual_import():
             log_entry.status = 'success'
             db.session.commit()
             
-            flash(f'Importación manual completada: {result.get("total_imported", 0)} registros procesados, {result.get("new", 0)} nuevos, {result.get("updated", 0)} actualizados en {import_duration:.2f} segundos', 'success')
-            logging.info(f'Manual import successful by {session.get("admin_username")}: {result}')
+            flash(f'Importación manual completada exitosamente: {result.get("total_imported", 0)} registros importados, {result.get("new", 0)} nuevos en {import_duration:.1f} segundos', 'success')
+            logging.info(f'✅ Manual import completed by {session.get("admin_username")}: {result}')
             
         except Exception as import_error:
+            import_duration = time.time() - start_time
             log_entry.status = 'error'
             log_entry.error_message = str(import_error)
+            log_entry.import_duration = import_duration
             db.session.commit()
             
             flash(f'Error en importación manual: {str(import_error)}', 'error')
-            logging.error(f'Manual import failed: {import_error}')
+            logging.error(f'❌ Manual import failed after {import_duration:.1f}s: {import_error}')
             
     except Exception as e:
         flash(f'Error al procesar importación manual: {str(e)}', 'error')
-        logging.error(f'Manual import processing error: {e}')
+        logging.error(f'❌ Manual import processing error: {e}')
     
     return redirect(url_for('admin.dashboard'))
 
