@@ -107,9 +107,12 @@ class APIToken(db.Model):
     
     def reset_if_needed(self):
         """Reset request count if an hour has passed"""
-        if self.last_reset is None or datetime.utcnow() - self.last_reset >= timedelta(hours=1):
+        current_time = datetime.utcnow()
+        if self.last_reset is None or current_time - self.last_reset >= timedelta(hours=1):
+            import logging
+            logging.info(f"Token {self.name}: Resetting request count from {self.requests_used} to 0. Last reset: {self.last_reset}, Current time: {current_time}")
             self.requests_used = 0
-            self.last_reset = datetime.utcnow()
+            self.last_reset = current_time
             db.session.commit()
     
     def can_make_request(self):
@@ -119,11 +122,11 @@ class APIToken(db.Model):
     
     def use_request(self):
         """Increment request counter"""
-        if self.can_make_request():
-            self.requests_used = (self.requests_used or 0) + 1
-            db.session.commit()
-            return True
-        return False
+        import logging
+        old_count = self.requests_used or 0
+        self.requests_used = old_count + 1
+        logging.info(f"Token {self.name}: Using request #{self.requests_used}/{self.requests_per_hour}")
+        db.session.commit()
     
     def is_expired(self):
         """Check if token is expired"""
