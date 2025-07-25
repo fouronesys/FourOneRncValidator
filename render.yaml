@@ -3,7 +3,7 @@ services:
     name: four-one-rnc-validator
     env: python
     plan: free
-    buildCommand: pip install flask pandas gunicorn werkzeug flask-sqlalchemy psycopg2-binary
+    buildCommand: pip install -r render_requirements.txt
     startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 300 main:app
     envVars:
       - key: PYTHON_VERSION
