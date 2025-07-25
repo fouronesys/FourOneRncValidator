@@ -192,6 +192,60 @@
         </div>
     </section>
 
+    <!-- Name Search Demo Section -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-6 mx-auto">
+                    <div class="demo-card bg-white p-4 rounded shadow">
+                        <h3 class="fw-bold mb-4 text-center">
+                            <i class="fas fa-building me-2"></i>
+                            Buscar por Nombre de Empresa
+                        </h3>
+                        <form id="name-search-form">
+                            <div class="mb-3">
+                                <label for="name-input" class="form-label">Busca una empresa:</label>
+                                <div class="input-group position-relative">
+                                    <input 
+                                        type="text" 
+                                        class="form-control form-control-lg" 
+                                        id="name-input" 
+                                        placeholder="Ej: Banco Popular, Claro"
+                                        autocomplete="off"
+                                    >
+                                    <button class="btn btn-success" type="submit">
+                                        <i class="fas fa-search me-1"></i>
+                                        Buscar
+                                    </button>
+                                    <!-- Dropdown for suggestions -->
+                                    <div id="suggestions-dropdown" class="dropdown-menu position-absolute w-100" style="top: 100%; z-index: 1000;">
+                                    </div>
+                                </div>
+                                <div class="form-text">
+                                    Escribe al menos 2 caracteres para ver sugerencias
+                                </div>
+                            </div>
+                        </form>
+                        
+                        <!-- Name Search Results -->
+                        <div id="name-results" class="mt-4" style="display: none;">
+                            <div class="alert" id="name-result-alert">
+                                <div id="name-result-content"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Name Search Loading -->
+                        <div id="name-loading" class="text-center mt-3" style="display: none;">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">Buscando...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- API Endpoints Preview -->
     <section class="py-5">
         <div class="container">
@@ -235,6 +289,18 @@
                         <h5 class="fw-bold">Búsqueda por Lotes</h5>
                         <p class="text-muted">
                             Valida múltiples RNCs en una sola petición (máximo 10).
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="endpoint-card p-4 border rounded">
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="badge bg-success me-3">GET</span>
+                            <code class="text-primary">/api/search-by-name</code>
+                        </div>
+                        <h5 class="fw-bold">Búsqueda por Nombre</h5>
+                        <p class="text-muted">
+                            Busca empresas por nombre con sugerencias mientras escribes.
                         </p>
                     </div>
                 </div>

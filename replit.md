@@ -170,7 +170,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (July 2025)
 
-### Token Rate Limiting Fix & Admin Password Management
+### Company Name Search with Autocomplete Feature
+- ✓ Added new API endpoint `/api/search-by-name` for company name searches
+- ✓ Implemented database search using PostgreSQL ILIKE for partial matching
+- ✓ Created professional autocomplete interface with real-time suggestions
+- ✓ Added keyboard navigation support (arrow keys, enter, escape)
+- ✓ Integrated debounced search to optimize API calls (300ms delay)
+- ✓ Enhanced frontend with beautiful dropdown styling and hover effects
+- ✓ Added comprehensive error handling and loading states
+- ✓ Extended FourOneAPI utility object with searchByName method
+
+### Token Rate Limiting Fix & Admin Password Management  
 - ✓ Fixed token rate limiting logic that wasn't resetting after 1 hour
 - ✓ Corrected use_request() method to avoid duplicate verification checks
 - ✓ Added comprehensive logging for token usage and reset debugging

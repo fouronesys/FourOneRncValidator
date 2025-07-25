@@ -216,6 +216,50 @@ def search_rncs():
             "message": "Internal server error"
         }), 500
 
+@api_bp.route('/api/search-by-name', methods=['GET'])
+@rate_limit(30)  # Lower rate limit for search endpoint
+def search_by_name():
+    """Search companies by name with autocomplete suggestions"""
+    try:
+        name_query = request.args.get('q') or request.args.get('query')
+        limit = request.args.get('limit', 10, type=int)
+        
+        if not name_query:
+            return jsonify({
+                "status": "error",
+                "message": "Query parameter 'q' or 'query' is required"
+            }), 400
+        
+        # Validate limit
+        if limit < 1 or limit > 50:
+            limit = 10
+        
+        success, result = rnc_service.search_by_name(name_query, limit)
+        
+        if success:
+            return jsonify({
+                "status": "success",
+                "query": result["query"],
+                "suggestions": result["suggestions"],
+                "total_found": result["total_found"],
+                "message": result["message"]
+            })
+        else:
+            return jsonify({
+                "status": "not_found" if "No companies found" in result.get("message", "") else "error",
+                "query": result.get("query", name_query),
+                "suggestions": result.get("suggestions", []),
+                "total_found": result.get("total_found", 0),
+                "message": result.get("message", result.get("error", "Search failed"))
+            }), 404 if "No companies found" in result.get("message", "") else 400
+            
+    except Exception as e:
+        logging.error(f"Error in name search: {str(e)}")
+        return jsonify({
+            "status": "error",
+            "message": "Internal server error"
+        }), 500
+
 @api_bp.errorhandler(404)
 def not_found(error):
     """Handle 404 errors"""

@@ -3,6 +3,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize components
     initRNCValidator();
+    initNameSearch();
     initSmoothScrolling();
     initTooltips();
 });
@@ -41,6 +42,293 @@ function initRNCValidator() {
         
         validateRNC(rnc);
     });
+}
+
+function initNameSearch() {
+    const nameInput = document.getElementById('name-input');
+    const nameForm = document.getElementById('name-search-form');
+    const suggestionsDropdown = document.getElementById('suggestions-dropdown');
+    
+    if (!nameInput || !nameForm) return;
+    
+    let searchTimeout;
+    let currentQuery = '';
+    
+    // Handle input changes for autocomplete
+    nameInput.addEventListener('input', function(e) {
+        const query = e.target.value.trim();
+        currentQuery = query;
+        
+        // Clear existing timeout
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
+        }
+        
+        // Hide suggestions if query is too short
+        if (query.length < 2) {
+            hideSuggestions();
+            return;
+        }
+        
+        // Debounce the search
+        searchTimeout = setTimeout(() => {
+            if (currentQuery === query) { // Only search if query hasn't changed
+                searchByName(query, true); // true for autocomplete mode
+            }
+        }, 300);
+    });
+    
+    // Handle form submission
+    nameForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const query = nameInput.value.trim();
+        
+        if (!query) {
+            showNameError('Por favor ingresa al menos 2 caracteres para buscar');
+            return;
+        }
+        
+        if (query.length < 2) {
+            showNameError('La búsqueda debe tener al menos 2 caracteres');
+            return;
+        }
+        
+        hideSuggestions();
+        searchByName(query, false); // false for full search mode
+    });
+    
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!nameInput.contains(e.target) && !suggestionsDropdown.contains(e.target)) {
+            hideSuggestions();
+        }
+    });
+    
+    // Handle keyboard navigation in suggestions
+    nameInput.addEventListener('keydown', function(e) {
+        const suggestions = suggestionsDropdown.querySelectorAll('.dropdown-item');
+        if (suggestions.length === 0) return;
+        
+        let activeIndex = -1;
+        suggestions.forEach((item, index) => {
+            if (item.classList.contains('active')) {
+                activeIndex = index;
+            }
+        });
+        
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            activeIndex = activeIndex < suggestions.length - 1 ? activeIndex + 1 : 0;
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            activeIndex = activeIndex > 0 ? activeIndex - 1 : suggestions.length - 1;
+        } else if (e.key === 'Enter' && activeIndex >= 0) {
+            e.preventDefault();
+            suggestions[activeIndex].click();
+            return;
+        } else if (e.key === 'Escape') {
+            hideSuggestions();
+            return;
+        }
+        
+        // Update active state
+        suggestions.forEach((item, index) => {
+            item.classList.toggle('active', index === activeIndex);
+        });
+    });
+}
+
+function searchByName(query, isAutocomplete = false) {
+    const nameResults = document.getElementById('name-results');
+    const nameLoading = document.getElementById('name-loading');
+    const suggestionsDropdown = document.getElementById('suggestions-dropdown');
+    
+    if (!isAutocomplete) {
+        // Show loading for full search
+        if (nameResults) nameResults.style.display = 'none';
+        if (nameLoading) nameLoading.style.display = 'block';
+    }
+    
+    // Make API call
+    const limit = isAutocomplete ? 8 : 10;
+    fetch(`/api/search-by-name?q=${encodeURIComponent(query)}&limit=${limit}`)
+        .then(response => {
+            return response.json().then(data => {
+                return { status: response.status, data: data };
+            });
+        })
+        .then(result => {
+            if (!isAutocomplete) {
+                hideNameLoading();
+            }
+            
+            if (result.status === 200 && result.data.suggestions && result.data.suggestions.length > 0) {
+                if (isAutocomplete) {
+                    showSuggestions(result.data.suggestions);
+                } else {
+                    showNameResults(result.data);
+                }
+            } else {
+                if (isAutocomplete) {
+                    hideSuggestions();
+                } else {
+                    showNameNotFound(result.data);
+                }
+            }
+        })
+        .catch(error => {
+            if (!isAutocomplete) {
+                hideNameLoading();
+            }
+            console.error('Name Search API Error:', error);
+            if (!isAutocomplete) {
+                showNameError('Error de conexión. Por favor intenta nuevamente.');
+            } else {
+                hideSuggestions();
+            }
+        });
+}
+
+function showSuggestions(suggestions) {
+    const suggestionsDropdown = document.getElementById('suggestions-dropdown');
+    if (!suggestionsDropdown) return;
+    
+    let html = '';
+    suggestions.forEach(suggestion => {
+        html += `
+            <div class="dropdown-item" onclick="selectSuggestion('${escapeHtml(suggestion.nombre)}', '${suggestion.rnc}')">
+                <div class="fw-bold">${escapeHtml(suggestion.nombre)}</div>
+                <div class="text-muted small">
+                    RNC: ${suggestion.rnc} 
+                    ${suggestion.estado ? `• ${escapeHtml(suggestion.estado)}` : ''}
+                </div>
+                ${suggestion.actividad_economica ? `<div class="text-muted small">${escapeHtml(suggestion.actividad_economica)}</div>` : ''}
+            </div>
+        `;
+    });
+    
+    suggestionsDropdown.innerHTML = html;
+    suggestionsDropdown.classList.add('show');
+}
+
+function hideSuggestions() {
+    const suggestionsDropdown = document.getElementById('suggestions-dropdown');
+    if (suggestionsDropdown) {
+        suggestionsDropdown.classList.remove('show');
+        suggestionsDropdown.innerHTML = '';
+    }
+}
+
+function selectSuggestion(name, rnc) {
+    const nameInput = document.getElementById('name-input');
+    if (nameInput) {
+        nameInput.value = name;
+    }
+    hideSuggestions();
+    
+    // Optionally, trigger a full search or show RNC details
+    searchByName(name, false);
+}
+
+function showNameResults(data) {
+    const nameResults = document.getElementById('name-results');
+    const alert = document.getElementById('name-result-alert');
+    const content = document.getElementById('name-result-content');
+    
+    if (!nameResults || !alert || !content) return;
+    
+    alert.className = 'alert alert-success';
+    
+    let html = `
+        <div class="d-flex align-items-center mb-3">
+            <i class="fas fa-building fa-2x text-success me-3"></i>
+            <div>
+                <h5 class="mb-1">Búsqueda Exitosa</h5>
+                <p class="mb-0">Se encontraron ${data.total_found} empresa(s) que coinciden con "${data.query}"</p>
+            </div>
+        </div>
+    `;
+    
+    if (data.suggestions && data.suggestions.length > 0) {
+        html += '<div class="mt-3">';
+        data.suggestions.forEach(company => {
+            html += `
+                <div class="card mb-2">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h6 class="card-title mb-1">${escapeHtml(company.nombre)}</h6>
+                                <p class="text-muted small mb-1">RNC: <strong>${company.rnc}</strong></p>
+                                ${company.estado ? `<span class="badge bg-${company.estado === 'ACTIVE' ? 'success' : 'warning'}">${escapeHtml(company.estado)}</span>` : ''}
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <button class="btn btn-sm btn-outline-primary" onclick="validateRNC('${company.rnc}')">
+                                    <i class="fas fa-search me-1"></i>Ver Detalles
+                                </button>
+                            </div>
+                        </div>
+                        ${company.actividad_economica ? `<div class="mt-2"><small class="text-muted">${escapeHtml(company.actividad_economica)}</small></div>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+    }
+    
+    content.innerHTML = html;
+    nameResults.style.display = 'block';
+    nameResults.classList.add('fade-in');
+}
+
+function showNameNotFound(data) {
+    const nameResults = document.getElementById('name-results');
+    const alert = document.getElementById('name-result-alert');
+    const content = document.getElementById('name-result-content');
+    
+    if (!nameResults || !alert || !content) return;
+    
+    alert.className = 'alert alert-warning';
+    content.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas fa-exclamation-triangle fa-2x text-warning me-3"></i>
+            <div>
+                <h5 class="mb-1">Sin Resultados</h5>
+                <p class="mb-0">${data.message || 'No se encontraron empresas que coincidan con tu búsqueda'}</p>
+            </div>
+        </div>
+    `;
+    
+    nameResults.style.display = 'block';
+    nameResults.classList.add('fade-in');
+}
+
+function showNameError(message) {
+    const nameResults = document.getElementById('name-results');
+    const alert = document.getElementById('name-result-alert');
+    const content = document.getElementById('name-result-content');
+    
+    if (!nameResults || !alert || !content) return;
+    
+    alert.className = 'alert alert-danger';
+    content.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas fa-times-circle fa-2x text-danger me-3"></i>
+            <div>
+                <h5 class="mb-1">Error</h5>
+                <p class="mb-0">${message}</p>
+            </div>
+        </div>
+    `;
+    
+    nameResults.style.display = 'block';
+    nameResults.classList.add('fade-in');
+}
+
+function hideNameLoading() {
+    const nameLoading = document.getElementById('name-loading');
+    if (nameLoading) {
+        nameLoading.style.display = 'none';
+    }
 }
 
 function validateRNC(rnc) {
@@ -260,6 +548,15 @@ window.FourOneAPI = {
             .then(response => response.json())
             .then(data => {
                 console.log('API status:', data);
+                return data;
+            });
+    },
+    
+    searchByName: function(query, limit = 10) {
+        return fetch(`/api/search-by-name?q=${encodeURIComponent(query)}&limit=${limit}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log('Name search results:', data);
                 return data;
             });
     }
