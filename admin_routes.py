@@ -53,6 +53,44 @@ def logout():
     flash('Sesión cerrada exitosamente', 'info')
     return redirect(url_for('admin.login'))
 
+@admin_bp.route('/change-password', methods=['GET', 'POST'])
+@admin_required
+def change_password():
+    """Change admin password"""
+    if request.method == 'POST':
+        current_password = request.form.get('current_password')
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+        
+        if not all([current_password, new_password, confirm_password]):
+            flash('Todos los campos son requeridos', 'error')
+            return render_template('admin/change_password.html')
+        
+        if new_password != confirm_password:
+            flash('Las contraseñas nuevas no coinciden', 'error')
+            return render_template('admin/change_password.html')
+        
+        if not new_password or len(new_password) < 6:
+            flash('La contraseña debe tener al menos 6 caracteres', 'error')
+            return render_template('admin/change_password.html')
+        
+        # Get current admin user
+        admin = AdminUser.query.filter_by(username=session['admin_username'], is_active=True).first()
+        
+        if not admin or not admin.check_password(current_password):
+            flash('Contraseña actual incorrecta', 'error')
+            return render_template('admin/change_password.html')
+        
+        # Update password
+        admin.set_password(new_password)
+        db.session.commit()
+        
+        flash('Contraseña cambiada exitosamente', 'success')
+        logging.info(f'Password changed for admin user: {admin.username}')
+        return redirect(url_for('admin.dashboard'))
+    
+    return render_template('admin/change_password.html')
+
 @admin_bp.route('/dashboard')
 @admin_required
 def dashboard():

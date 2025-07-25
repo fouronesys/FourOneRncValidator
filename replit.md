@@ -168,6 +168,17 @@ Preferred communication style: Simple, everyday language.
 - ✓ Import status clearly shows "COMPLETED" when finished
 - ✓ Final count: 739,929 RNC records successfully imported and accessible
 
+## Recent Changes (July 2025)
+
+### Token Rate Limiting Fix & Admin Password Management
+- ✓ Fixed token rate limiting logic that wasn't resetting after 1 hour
+- ✓ Corrected use_request() method to avoid duplicate verification checks
+- ✓ Added comprehensive logging for token usage and reset debugging
+- ✓ Implemented admin password change functionality with secure validation
+- ✓ Created professional password change interface with real-time validation
+- ✓ Added password strength requirements (minimum 6 characters)
+- ✓ Enhanced admin navigation with password change access
+
 ## Previous Changes (January 2025)
 
 ### Complete Admin Panel & Token System Implementation
